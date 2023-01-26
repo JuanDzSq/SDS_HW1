@@ -27,8 +27,10 @@ def main():
                     poller.stop()
                     break
                 elif command == "m":
+                    poller.missing()
                     break
-                print("Unknown response")         
+                print("Unknown response")
+    
 
 if __name__ == "__main__":
     main()
