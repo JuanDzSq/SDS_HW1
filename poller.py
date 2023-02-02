@@ -11,6 +11,7 @@ class Poller:
         self.fieldnames = ['name','polled','correct','attempted','excused']
         excess = []
         f_reader = csv.DictReader(self.csvp, fieldnames=self.fieldnames, restkey=excess, restval='Missing')
+        self.f_writer = csv.DictWriter(self.csvp, fieldnames=self.fieldnames, delimitir=',')
 
         if len(excess):
             # Throw ValueError
@@ -20,8 +21,7 @@ class Poller:
             if any(val in ('Missing') for val in line.values()):    # From https://stackoverflow.com/questions/1278749/how-do-i-detect-missing-fields-in-a-csv-file-in-a-pythonic-way
                 # Throw ValueError
                 pass
-            else:
-                self.f_dict_list.append(line)                
+            self.f_dict_list.append(line)                
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
@@ -46,7 +46,16 @@ class Poller:
                         int(self.current_participant['attempted']), int(self.current_participant['excused']))
         return current_participant_str
     
-    #def attempted():
+    def attempted(self):
+        # Use self.current_participant
+        # Modify self.f_dict_list only
+        for dictionary in self.f_dict_list:
+            if dictionary['name'] == self.current_participant['name']:
+                dictionary['attempted'] = str(1 + int(self.current_participant['attempted']))
+                dictionary['polled'] = str(1 + int(self.current_participant['polled']))
+            break
+        for line in self.f_dict_list:
+            self.f_writer.writerow(line)
 
     #def correct():
 
