@@ -15,7 +15,7 @@ def main():
                 print("%s: (A)nswered (C)orrect (E)xcused (M)issing (Q)uit" % participant)
                 command = input().lower()
                 if command == "a":
-                    poller.attempted()
+                    poller.attempted() # participant.attempted() ?
                     break
                 elif command == "c":
                     poller.correct()
