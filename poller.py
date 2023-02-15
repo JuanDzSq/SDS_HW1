@@ -2,58 +2,52 @@ import csv
 import random
 
 class Poller:
-    def __init__(self, file):
-        self.filename = file
+    def __init__(self, _file, opener=open):
+        self._filename = _file
+        self._opener = opener
         self.csvp = None
         self.total_polled = 0
+        self.f_participant_list = []
     def __enter__(self):
-        self.csvp = open(self.filename, 'r')
+        self.csvp = self._opener(self._filename, 'r')
         self.fieldnames = ['name','polled','correct','attempted','excused']
         excess = []
         f_reader = csv.DictReader(self.csvp, fieldnames=self.fieldnames, restkey=excess, restval='Missing')
         if len(excess):
-            # Throw ValueError
+            # TO DO (Juan) Add a throw ValueError
             pass
-        self.f_dict_list = []
         for line in f_reader:
-            if any(val in ('Missing') for val in line.values()):    # From https://stackoverflow.com/questions/1278749/how-do-i-detect-missing-fields-in-a-csv-file-in-a-pythonic-way
-                # Throw ValueError
+            if any(val in ('Missing') for val in line.values()):    # From https://stackoverflow.com/questions/1278749/how-do-i-detect-missing-fields-in-a-csv-_file-in-a-pythonic-way
+                # TO DO (Juan) Add a throw ValueError
                 pass
-            self.f_dict_list.append(line)   
+            self.f_participant_list.append(Participant(line['name'], line['polled'], line['correct'], line['attempted'], line['excused']))
         return self
     def __exit__(self, exc_type, exc_value, traceback):
-        #self.csvp = open(self.filename, 'w')
-        #self.f_writer = csv.DictWriter(self.csvp, fieldnames=self.fieldnames)
-        #self.f_writer.writerows(self.f_dict_list)
+        self.csvp = self._opener(self._filename, 'w')
+        self.f_writer = csv.writer(self.csvp)
+        for participant in self.f_participant_list:
+            self.f_writer.writerow([participant.name, participant.polled, participant.correct, participant.attempted, participant.excused])
         self.csvp.close()
     def __iter__(self):
         return self
     def __next__(self):
-        polled_list = []
-        for dictionary in self.f_dict_list:
-            polled_list.append(int(dictionary['polled']))
+        polled_list = [participant.polled for participant in self.f_participant_list]
         lowest_num = min(polled_list)
-        #del polled_list
         low_polled = []
-        for dictionary in self.f_dict_list:
-            if int(dictionary['polled']) == lowest_num:
-                low_polled.append(dictionary)
+        for participant in self.f_participant_list:
+            if participant.polled == lowest_num:
+                low_polled.append(participant)
         rando_int = random.randint(0, len(low_polled) - 1)
         self.current_participant = low_polled[rando_int]
-        current_participant_str = Participant(self.current_participant['name'], int(self.current_participant['polled']), int(self.current_participant['correct']), 
-                        int(self.current_participant['attempted']), int(self.current_participant['excused']))
-        return current_participant_str
+        return str(self.current_participant)
     def update(self, method_name):
-        for i in range(len(self.f_dict_list)):
-            if self.f_dict_list[i]['name'] == self.current_participant['name']:
-                self.f_dict_list[i]['polled'] = str(1 + int(self.current_participant['polled']))
-                self.total()
+        for i in range(len(self.f_participant_list)):
+            if self.f_participant_list[i].name == self.current_participant.name:
+                self.f_participant_list[i].polled = 1 + self.current_participant.polled
+                self.total_increase()
                 if method_name != 'missing':
-                    self.f_dict_list[i][method_name] = str(1 + int(self.current_participant[method_name]))
+                    setattr(self.f_participant_list[i], method_name, 1 + getattr(self.f_participant_list[i], method_name)) 
                 break
-        self.csvp = open(self.filename, 'w')
-        self.f_writer = csv.DictWriter(self.csvp, fieldnames=self.fieldnames)
-        self.f_writer.writerows(self.f_dict_list)
     def attempted(self):
         self.update('attempted')
     def correct(self):
@@ -64,15 +58,24 @@ class Poller:
         self.update('missing')
     def stop(self):
         return True
-    def total(self):
+    def total_increase(self):
         self.total_polled += 1
+    def total(self):
+        return self.total_polled
+    
+    def mock_writer(self):
+        with self._opener(self._filename, 'w') as f:
+            for participant in self.f_participant_list:
+                f.write(str(participant))
 class Participant:
-    def __init__(self, name: str, polled: int, correct: int, attempted: int, excused: int):
+    def __init__(self, name: str, polled, correct, attempted, excused):
         self.name = name
-        self.polled = polled
-        self.correct = correct
-        self.attempted = attempted
-        self.excused = excused
+        self.polled = int(polled)
+        self.correct = int(correct)
+        self.attempted = int(attempted)
+        self.excused = int(excused)
     
     def __str__(self):
         return ','.join([self.name, str(self.polled), str(self.correct), str(self.attempted), str(self.excused)])
+        
+# Write down comments
