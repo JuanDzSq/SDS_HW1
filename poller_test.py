@@ -17,52 +17,88 @@ def mock_opener(mock_file_input):
         def write(self, text):
             Opener.mock_file_output.append(text)
     return Opener    
-        
+
 def test_participant():
     participant = Participant("Isabelle",5,3,1,1)
     assert str(participant) == "Isabelle,5,3,1,1"
 
-def test_attempted():
+def test_poller_enter():
+    mock = mock_opener(["Isabelle,0,0,0,0"])
+    p = Poller('participants.csv', mock)
+    p.__enter__()
+    assert str(p.f_participant_list[0]) == "Isabelle,0,0,0,0"
+
+def test_poller_exit():
     mock = mock_opener(["Isabelle,0,0,0,0"])
     p = Poller('participants.csv', mock)
     p.__enter__()
     p.__iter__()
     p.__next__()
     p.attempted()
-    p.mock_writer()
-    assert mock.mock_file_output == ['Isabelle,1,0,1,0'], "The attempted method didn't work"
+    p.__exit__(None,None,None)
+    assert mock.mock_file_output == ['Isabelle,1,0,1,0\r\n']
 
-def test_correct():
+def test_poller_enter_missing_fields_error():
+    mock = mock_opener(["Isabelle,0,0,,0"])
+    p = Poller('participants.csv', mock)
+    try:
+        p.__enter__()
+    except:
+        assert True
+    else:
+        assert False, "Failed to raise error"
+
+def test_poller_enter_excess_fields_error():
+    mock = mock_opener(["Isabelle,0,0,0,0,0"])
+    p = Poller('participants.csv', mock)
+    try:
+        p.__enter__()
+    except:
+        assert True
+    else:
+        assert False, "Failed to raise error"
+
+def test_poller_attempted():
+    mock = mock_opener(["Isabelle,0,0,0,0"])
+    p = Poller('participants.csv', mock)
+    p.__enter__()
+    p.__iter__()
+    p.__next__()
+    p.attempted()
+    p.__exit__(None,None,None)
+    assert mock.mock_file_output == ['Isabelle,1,0,1,0\r\n'], "The attempted method didn't work"
+
+def test_poller_correct():
     mock = mock_opener(["Isabelle,0,0,0,0"])
     p = Poller('participants.csv', mock)
     p.__enter__()
     p.__iter__()
     p.__next__()
     p.correct()
-    p.mock_writer()
-    assert mock.mock_file_output == ['Isabelle,1,1,0,0'], "The correct method didn't work"
+    p.__exit__(None,None,None)
+    assert mock.mock_file_output == ['Isabelle,1,1,0,0\r\n'], "The correct method didn't work"
 
-def test_excused():
+def test_poller_excused():
     mock = mock_opener(["Isabelle,0,0,0,0"])
     p = Poller('participants.csv', mock)
     p.__enter__()
     p.__iter__()
     p.__next__()
     p.excused()
-    p.mock_writer()
-    assert mock.mock_file_output == ['Isabelle,1,0,0,1'], "The excused method didn't work"
+    p.__exit__(None,None,None)
+    assert mock.mock_file_output == ['Isabelle,1,0,0,1\r\n'], "The excused method didn't work"
 
-def test_missing():
+def test_poller_missing():
     mock = mock_opener(["Isabelle,0,0,0,0"])
     p = Poller('participants.csv', mock)
     p.__enter__()
     p.__iter__()
     p.__next__()
     p.missing()
-    p.mock_writer()
-    assert mock.mock_file_output == ['Isabelle,1,0,0,0'], "The missing method didn't work"
+    p.__exit__(None,None,None)
+    assert mock.mock_file_output == ['Isabelle,1,0,0,0\r\n'], "The missing method didn't work"
 
-def test_total():
+def test_poller_total():
     mock = mock_opener(["Isabelle,0,0,0,0"])
     p = Poller('participants.csv', mock)
     p.__enter__()
@@ -76,7 +112,7 @@ def test_total():
     p_total = p.total()
     assert p_total == 3, "The total method didn't work"
 
-def test_iter_next_1():
+def test_poller_iter_next():
     mock = mock_opener(["Isabelle,0,0,0,0", "Jesus,3,0,0,0", "Tidi,2,0,0,0"])
     p = Poller('participants.csv', mock)
     p.__enter__()
