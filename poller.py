@@ -99,6 +99,13 @@ class Poller:
         self.current_participant = lowest_polled_participants[random_int]  # Gets random participant with the lowest polled count.
         return str(self.current_participant)
     
+    """
+    I like your idea to use a helper method for each of the methods that share functionality! Here is some feedback:
+    Having to loop through our participants list every time we update an individual can get costly if we have a lot of
+    participants. We could consider updating our self.current_particpant attribute directly bc it is 
+    the same object (more technically it "points to" see https://www.pythonmorsels.com/variables-are-pointers/)
+    as the current participant found in the list.
+    """
     def update(self, method_name):
         """Updates the randomly polled participant in f_participant_list with a corresponding given command.
 
@@ -110,7 +117,7 @@ class Poller:
         """
         for i in range(len(self.f_participant_list)):
             if self.f_participant_list[i].name == self.current_participant.name:
-                self.f_participant_list[i].polled = 1 + self.current_participant.polled  # Increases poll count by 1.
+                self.f_participant_list[i].polled = 1 + self.current_participant.polled  # Increases poll count by 1. # try "+=" syntax here.
                 self.total_increase()
                 if method_name != 'missing':
                     setattr(self.f_participant_list[i], method_name, 
